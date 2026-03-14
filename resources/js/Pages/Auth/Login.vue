@@ -2,7 +2,6 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticationCard from '@/Components/AuthenticationCard.vue';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
-import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -41,14 +40,16 @@ const submit = () => {
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
+        <form @submit.prevent="submit" class="space-y-6">
+            <!-- Email/Username Field -->
+            <div class="space-y-2">
+                <InputLabel for="email" value="Username or Email" />
                 <TextInput
                     id="email"
                     v-model="form.email"
                     type="email"
-                    class="mt-1 block w-full"
+                    icon="person"
+                    placeholder="Enter your username"
                     required
                     autofocus
                     autocomplete="username"
@@ -56,35 +57,42 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
+            <!-- Password Field -->
+            <div class="space-y-2">
                 <InputLabel for="password" value="Password" />
                 <TextInput
                     id="password"
                     v-model="form.password"
                     type="password"
-                    class="mt-1 block w-full"
+                    icon="lock"
+                    placeholder="Enter your password"
                     required
                     autocomplete="current-password"
                 />
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <div class="block mt-4">
-                <label class="flex items-center">
-                    <Checkbox v-model:checked="form.remember" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600">Remember me</span>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                <Link v-if="canResetPassword" :href="route('password.request')" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Forgot your password?
+            <!-- Forgot Password Link -->
+            <div class="flex justify-end">
+                <Link v-if="canResetPassword" :href="route('password.request')" class="text-sm font-medium text-primary hover:underline">
+                    Forgot password?
                 </Link>
-
-                <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Log in
-                </PrimaryButton>
             </div>
+
+            <!-- Login Button -->
+            <PrimaryButton class="mt-6" :disabled="form.processing">
+                Log In
+            </PrimaryButton>
         </form>
+
+        <!-- Sign Up Link -->
+        <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+            <p class="text-slate-600 dark:text-slate-400 text-sm">
+                Don't have an account?
+                <Link :href="route('register')" class="text-primary font-bold hover:underline ml-1">
+                    Sign up
+                </Link>
+            </p>
+        </div>
     </AuthenticationCard>
 </template>
