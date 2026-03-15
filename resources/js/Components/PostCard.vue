@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
     post: {
@@ -43,14 +44,17 @@ const prevImage = () => {
         <!-- Post Header -->
         <div class="flex items-center justify-between p-4">
             <div class="flex items-center gap-3">
-                <!-- Profile Image -->
-                <div class="w-9 h-9 rounded-full p-[1.5px] bg-gradient-to-tr from-yellow-400 via-primary to-purple-600">
-                    <div class="w-full h-full rounded-full border-2 border-white dark:border-slate-900 bg-center bg-cover"
-                        :style="`background-image: url('${post.user.profile_photo_url}')`"></div>
-                </div>
-                <div>
-                    <p class="text-sm font-bold">{{ post.user.name }}</p>
-                </div>
+                <!-- Avatar + Name → public profile -->
+                <Link :href="`/users/${post.user.id}`" class="flex items-center gap-3 group">
+                    <div
+                        class="w-9 h-9 rounded-full p-[1.5px] bg-gradient-to-tr from-yellow-400 via-primary to-purple-600">
+                        <div class="w-full h-full rounded-full border-2 border-white dark:border-slate-900 bg-center bg-cover"
+                            :style="`background-image: url('${post.user.profile_photo_url}')`"></div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold group-hover:text-primary transition-colors">{{ post.user.name }}</p>
+                    </div>
+                </Link>
             </div>
         </div>
 
@@ -111,8 +115,7 @@ const prevImage = () => {
             <!-- View Comments Button -->
             <button v-if="post.comments_count > 0" @click="openComments"
                 class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors mb-2 block">
-                View all {{ post.comments_count }} comme
-                ];nts
+                View all {{ post.comments_count }} comments
             </button>
 
             <!-- Recent Comments Preview (2 max) -->
