@@ -29,6 +29,7 @@ const submit = () => {
 </script>
 
 <template>
+
     <Head title="Log in" />
 
     <AuthenticationCard>
@@ -44,40 +45,19 @@ const submit = () => {
             <!-- Email/Username Field -->
             <div class="space-y-2">
                 <InputLabel for="email" value="Username or Email" />
-                <TextInput
-                    id="email"
-                    v-model="form.email"
-                    type="email"
-                    icon="person"
-                    placeholder="Enter your username"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
+                <TextInput id="email" v-model="form.email" type="email" icon="person" placeholder="Enter your username"
+                    required autofocus autocomplete="username" />
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
             <!-- Password Field -->
             <div class="space-y-2">
                 <InputLabel for="password" value="Password" />
-                <TextInput
-                    id="password"
-                    v-model="form.password"
-                    type="password"
-                    icon="lock"
-                    placeholder="Enter your password"
-                    required
-                    autocomplete="current-password"
-                />
+                <TextInput id="password" v-model="form.password" type="password" icon="lock"
+                    placeholder="Enter your password" required autocomplete="current-password" />
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <!-- Forgot Password Link -->
-            <div class="flex justify-end">
-                <Link v-if="canResetPassword" :href="route('password.request')" class="text-sm font-medium text-primary hover:underline">
-                    Forgot password?
-                </Link>
-            </div>
 
             <!-- Login Button -->
             <PrimaryButton class="mt-6" :disabled="form.processing">

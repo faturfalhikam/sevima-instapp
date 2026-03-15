@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import TopNavigation from '@/Components/TopNavigation.vue';
 import BottomNavigation from '@/Components/BottomNavigation.vue';
 import PostCard from '@/Components/PostCard.vue';
+import CommentModal from '@/Components/CommentModal.vue';
 
 const page = usePage();
 const posts = ref([]);
@@ -11,6 +12,22 @@ const currentPage = ref(1);
 const isLoading = ref(false);
 const hasMorePosts = ref(true);
 const observerElement = ref(null);
+
+// Comment modal state
+const activeCommentPost = ref(null);
+const showCommentModal = ref(false);
+
+// Current authenticated user
+const currentUser = computed(() => {
+    const user = page.props.auth?.user;
+    if (!user) return null;
+    return {
+        ...user,
+        profile_photo_url: user.profile_photo_path
+            ? `/storage/${user.profile_photo_path}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
+    };
+});
 
 // Helper to get CSRF token from meta tag or Inertia props
 const getCsrfToken = () => {
@@ -37,9 +54,6 @@ const fetchFeed = async (pageNum = 1) => {
         const url = new URL('/api/feed', window.location.origin);
         url.searchParams.append('page', pageNum);
 
-        console.log('Fetching feed from:', url.toString());
-        console.log('User authenticated:', !!page.props.auth?.user);
-
         const response = await fetch(url.toString(), {
             method: 'GET',
             headers: {
@@ -49,10 +63,8 @@ const fetchFeed = async (pageNum = 1) => {
                 'X-CSRF-TOKEN': getCsrfToken(),
                 'X-XSRF-TOKEN': getXsrfToken(),
             },
-            credentials: 'include', // Include cookies for session-based auth
+            credentials: 'include',
         });
-
-        console.log('Feed response status:', response.status);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
@@ -61,9 +73,7 @@ const fetchFeed = async (pageNum = 1) => {
         }
 
         const data = await response.json();
-        console.log('Feed response:', data);
 
-        // Safely handle response data
         const postsData = data?.data || [];
         const paginationData = data?.pagination || {};
 
@@ -75,11 +85,8 @@ const fetchFeed = async (pageNum = 1) => {
 
         currentPage.value = paginationData.current_page || pageNum;
         hasMorePosts.value = paginationData.has_more || false;
-
-        console.log('Posts updated:', posts.value.length, 'posts loaded');
     } catch (error) {
         console.error('Error fetching feed:', error);
-        // Ensure posts is always an array
         if (!Array.isArray(posts.value)) {
             posts.value = [];
         }
@@ -100,7 +107,7 @@ const handleLike = async (postId, currentLikeStatus) => {
                 'X-CSRF-TOKEN': getCsrfToken(),
                 'X-XSRF-TOKEN': getXsrfToken(),
             },
-            credentials: 'include', // Include cookies for session-based auth
+            credentials: 'include',
         });
 
         if (!response.ok) {
@@ -109,7 +116,6 @@ const handleLike = async (postId, currentLikeStatus) => {
 
         const data = await response.json();
 
-        // Update post like status
         if (Array.isArray(posts.value)) {
             const post = posts.value.find(p => p.id === postId);
             if (post) {
@@ -122,38 +128,26 @@ const handleLike = async (postId, currentLikeStatus) => {
     }
 };
 
-// Handle comment
-const handleAddComment = async (postId, commentText) => {
-    try {
-        const response = await fetch(`/api/posts/${postId}/comments`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': getCsrfToken(),
-                'X-XSRF-TOKEN': getXsrfToken(),
-            },
-            credentials: 'include', // Include cookies for session-based auth
-            body: JSON.stringify({ content: commentText }),
-        });
+// Open comment modal for a post
+const openComments = (post) => {
+    activeCommentPost.value = post;
+    showCommentModal.value = true;
+};
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+// Close comment modal
+const closeComments = () => {
+    showCommentModal.value = false;
+    // Small delay before clearing the post so the close animation can finish
+    setTimeout(() => { activeCommentPost.value = null; }, 350);
+};
+
+// Update comments count after a comment is added
+const handleCommentAdded = (postId, newCount) => {
+    if (Array.isArray(posts.value)) {
+        const post = posts.value.find(p => p.id === postId);
+        if (post) {
+            post.comments_count = newCount;
         }
-
-        const data = await response.json();
-
-        // Update post comments
-        if (Array.isArray(posts.value)) {
-            const post = posts.value.find(p => p.id === postId);
-            if (post && Array.isArray(post.comments)) {
-                post.comments.push(data.comment);
-                post.comments_count = data.comments_count;
-            }
-        }
-    } catch (error) {
-        console.error('Error adding comment:', error);
     }
 };
 
@@ -206,7 +200,7 @@ onMounted(() => {
                     :key="post.id"
                     :post="post"
                     @like="handleLike"
-                    @comment="handleAddComment"
+                    @open-comments="openComments"
                 />
             </TransitionGroup>
 
@@ -228,6 +222,17 @@ onMounted(() => {
         <!-- Bottom Navigation -->
         <BottomNavigation />
     </div>
+
+    <!-- Comment Modal (teleported to body to avoid stacking context issues) -->
+    <Teleport to="body">
+        <CommentModal
+            :post="activeCommentPost"
+            :show="showCommentModal"
+            :current-user="currentUser"
+            @close="closeComments"
+            @comment-added="handleCommentAdded"
+        />
+    </Teleport>
 </template>
 
 <style scoped>

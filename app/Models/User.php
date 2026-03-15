@@ -31,6 +31,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'bio',
+        'profile_photo_path',
     ];
 
     /**
@@ -86,22 +88,22 @@ class User extends Authenticatable
     // Followers/Following relationships
     public function followers()
     {
-        return $this->hasMany(Follower::class, 'following_id');
+        return $this->hasMany(Follower::class , 'following_id');
     }
 
     public function following()
     {
-        return $this->hasMany(Follower::class, 'follower_id');
+        return $this->hasMany(Follower::class , 'follower_id');
     }
 
     public function followingUsers()
     {
-        return $this->hasManyThrough(User::class, Follower::class, 'follower_id', 'id', 'id', 'following_id');
+        return $this->hasManyThrough(User::class , Follower::class , 'follower_id', 'id', 'id', 'following_id');
     }
 
     public function followerUsers()
     {
-        return $this->hasManyThrough(User::class, Follower::class, 'following_id', 'id', 'id', 'follower_id');
+        return $this->hasManyThrough(User::class , Follower::class , 'following_id', 'id', 'id', 'follower_id');
     }
 
     public function isFollowing($user)
